@@ -1,0 +1,107 @@
+    * {
+      box-sizing: border-box;
+      margin: 0; padding: 0;
+      font: 15px/1.5em Arial;
+      color: hsl(0, 0%, 25%);
+    }
+
+	html, body {
+      xheight: 100%;
+      xpadding: 0 20px;
+      background: hsl(0, 0%, 75%);
+    }
+
+    #page {
+      position: relative;
+      max-width: 1024px;
+      height: 100%;
+      margin: 0 auto;
+      background: hsl(0, 0%, 50%);
+      box-shadow: inset 0 0 5px hsla(0, 0%, 0%, 0.25);
+    }
+
+    /* aside */
+    
+    aside {
+      float: left;
+      width: 300px;
+      padding: 10px;
+    }
+    
+    aside ul {
+      list-style: none;
+    }
+    
+    aside ul li {
+      margin-top: 5px;
+    }
+
+    aside ul li, aside ul li * {
+      font-size: 13px;
+      color: hsl(0, 0%, 95%);
+    }
+        
+    aside ul li:first-child {
+      margin-top: 0;
+    }
+
+    /* #parts-list */
+
+    #parts-list {
+      margin-left: 300px;
+      xborder: 1px solid hsl(0, 0%, 50%);
+      overflow: hidden;
+    }
+    
+    #parts-list ul {
+      list-style: none;
+    }
+
+    #parts-list > ul > li {
+      position: relative;
+      height: 170px;
+      overflow: hidden;
+      padding: 10px;
+      background: linear-gradient(0deg, hsl(0, 0%, 95%), hsl(0, 0%, 100%), hsl(0, 0%, 100%));
+      background: linear-gradient(0deg, hsl(0, 0%, 100%), hsl(0, 0%, 95%));
+      xbackground: hsl(0, 0%, 100%);
+      xborder-bottom: 1px solid hsl(0, 0%, 50%);
+      margin: 1px;
+    }
+
+    #parts-list > ul > li .heading, #parts-list > ul > li .price {
+      font-size: 20px;
+      line-height: 25px;
+    }
+    
+    #parts-list > ul > li .image {
+      float: left;
+      width: 199px;
+      height: 150px;
+      xborder: 1px solid hsl(0, 0%, 75%);
+      box-shadow: inset 0 0 3px hsla(0, 0%, 0%, 0.25);
+    }
+    
+    #parts-list > ul > li .price {
+      float: right;
+    }
+    
+    #parts-list > ul > li > .description {
+      margin-left: 210px;
+    }
+    
+    #parts-list > ul > li .details {
+      position: absolute;
+      xoverflow: hidden;
+      bottom: 10px;
+      xbackground: red;
+    }
+    
+    #parts-list > ul > li .details .keys {
+      float: left;
+      margin-right: 5px;
+    }
+    
+    #parts-list > ul > li .details .values {
+      float: left;
+    }

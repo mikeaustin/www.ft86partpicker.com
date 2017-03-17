@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>React.js using NPM, Babel6 and Webpack</title>
+  <link rel="stylesheet" type="text/css" href="global.css">
+  <script src="../scripts/lodash.min.js"></script>
+  <script src="../models/partdata.js"></script>
+</head>
+<body>
+  <div id="app" xstyle="display: none;"></div>
+
+  <div id="page">
+    <aside>
+      <ul>
+        <li>
+            <span style="float: right; margin-left: 10px;">$920</span>
+        	TSW Bathurst Gloss Gunmetal 18x8 5x100 +35mm Wheels (4)
+        </li>
+        <li>
+            <span style="float: right; margin-left: 10px;">$920</span>
+        	Enkei Tuning TS9 18x8.5 +40 Wheels (4)
+        </li>
+      </ul>
+    </aside>
+
+    <div id="parts-list">
+      <ul>
+        <li>
+          <div class="image" style="background: white url(http://localhost/www.ft86partpicker.com/images/enkeitun_kojin_ms_sr190.jpg) center no-repeat; background-size: auto 100%;"></div>
+          <div class="actions">
+            <span class="price">$840</span>
+            <button style="position: absolute; right: 10px; bottom: 10px; width: 50px; height: 50px; background: hsl(100, 0%, 75%); border: none;">+</button>
+          </div>
+          <div class="description">
+            <h1 class="heading">TSW Bathurst Gloss Gunmetal 18x8 5x100 +35mm Wheels (4)</h1>
+            <p>Inexpensive tilt-cast w/flow-forming lightweight wheels.</p>
+          </div>
+          <div class="details" style="margin-left: 210px;">
+            <div class="keys">
+              Color:<br/>
+              Width:<br/>
+              Weight:<br/>
+            </div>
+            <div class="values">
+              Silver, Black, Gray<br/>
+              8, 8.5, 9.5 in<br/>
+              20 lbs<br/>
+            </div>
+          </div>
+        </li>
+        <li>
+          <div class="image" style="background: white url(http://localhost/www.ft86partpicker.com/images/sti_valve_stem_caps.jpg) center no-repeat; background-size: auto 100%;"></div>
+          <div class="price">$840</div>
+          <div class="description">
+            <h1 class="heading">Enkei Tuning Kojin 18x8 +45 Wheels (4)</h1>
+            <p>Inexpensive tilt-cast w/flow-forming lightweight wheels.</p>
+            <div class="details">
+              <div class="keys">
+                Color:<br/>
+                Width:<br/>
+                Weight:<br/>
+              </div>
+              <div class="values">
+                Silver, Black, Gray<br/>
+                8, 8.5, 9.5 in<br/>
+                20 lbs<br/>
+              </div>
+            </div>
+          </div>
+        </li>
+        <li></li>
+        <li></li>
+        <li></li>
+      </ul>
+    </div>
+  </div>
+  <script src="bundle.js" type="text/javascript"></script>
+</body>
+</html>

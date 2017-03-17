@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <script>
+    "use strict";
+
+    var Impulse = {
+      bindDataset: function(controller, funcName) {
+        return function(event) {
+          return controller[funcName](event.target.dataset);
+        }
+      },
+      
+      applyBindings: function(controller, rootElement, bindingsFunc) {
+        var bindings = bindingsFunc(controller);
+        
+        Object.keys(bindings).forEach(function(binding) {
+          var elements = rootElement.querySelectorAll(binding);
+          
+          elements.forEach(function(element) {
+            var events = bindings[binding];
+            
+            Object.keys(events).forEach(function(event) {
+              element.addEventListener(event, events[event], false);
+            });
+            
+            if (events.init) {
+              events.init.apply(element);
+            }
+          });
+        });
+
+        controller.onBindingsApplied();
+      }
+    };
+    
+    Impulse.Observable = function(value) {
+      this.value = value;
+      this.listeners = [];
+      
+      this.addListener = function(listener) {
+        this.listeners.push(listener);
+      };
+      
+      this.getValue = function() {
+        return this.value;
+      }
+      
+      this.setValue = function(value) {
+        this.value = value;
+        
+        var event = new CustomEvent("update", { detail: value });
+        
+        this.listeners.forEach(function(listener) {
+          listener.dispatchEvent(event);
+        });
+      };
+    }
+  </script>
+</head>
+<body>
+
+  <style>
+    #calc {
+      width: 200px;
+      border: 1px solid #afafaf;
+      overflow: hidden;
+    }
+    
+    #calc * {
+      box-sizing: border-box;
+      font: 20px/1em 'Arial';
+    }
+
+    #calc input {
+      width: 100%; height: 40px;
+      padding: 0 10px;
+      border: 1px solid #afafaf;
+      text-align: right;
+    }
+        
+    #calc button {
+      float: left;
+      width: 50px; height: 40px;
+    }
+    
+    #calc button.tall {
+      float: right;
+      height: 80px;
+    }
+    
+    #calc button.wide {
+      width: 100px;
+    }
+  </style>
+
+  <div id="calc">
+    <input data-binding="display" readonly />
+    
+    <button data-action="clear">C</button>
+    <button data-number="2"></button>
+    <button data-operator="div">÷</button>
+    <button data-operator="mul">×</button>
+
+    <button data-number="7">7</button>
+    <button data-number="8">8</button>
+    <button data-number="9">9</button>
+    <button data-operator="sub">−</button>
+
+    <button data-number="4">4</button>
+    <button data-number="5">5</button>
+    <button data-number="6">6</button>
+    <button data-operator="add">+</button>
+
+    <button data-number="1">1</button>
+    <button data-number="2">2</button>
+    <button data-number="3">3</button>
+    <button class="tall" data-operator="eql">=</button>
+
+    <button class="wide" data-number="0">0</button>
+    <button data-number=".">.</button>
+    
+    <input data-binding="display" readonly />
+  </div>
+
+  <script>
+    "use strict";
+    
+    function Calculator() {
+      this.displayString = new Impulse.Observable("");
+      this.numberValue = 0;
+      this.clearDisplay = true;
+      this.lastOperator = "eql";
+
+      this.onBindingsApplied = function() {
+        this.displayString.setValue(this.numberValue);
+      }
+
+      this.actionPressed = function(dataset) {
+        this.numberValue = 0;
+        this.displayString.setValue(this.numberValue);
+      }
+      
+      this.numberPressed = function(number) {
+        var displayString = this.displayString.getValue();
+      
+        if (this.clearDisplay) {
+          displayString = "";
+          
+          this.clearDisplay = false;
+        }
+        
+        this.displayString.setValue(displayString + number);
+      }
+      
+      this.operations = {
+        eql: function(a, b) { return b; },
+        add: function(a, b) { return a + b; },
+        sub: function(a, b) { return a - b; },
+        mul: function(a, b) { return a * b; },
+        div: function(a, b) { return a / b; }
+      }
+      
+      this.operatorPressed = function(dataset) {
+        if (!this.clearDisplay) {
+          var displayString = parseFloat(this.displayString.getValue());
+
+          var operation = this.operations[this.lastOperator];
+          if (operation != null) {
+            this.numberValue = operation(this.numberValue, displayString);
+            this.displayString.setValue(this.numberValue);
+          }
+        }
+        
+        this.lastOperator = dataset.operator;        
+        this.clearDisplay = true;
+      }
+    }
+    
+    Impulse.applyBindings(new Calculator(), document.querySelector("#calc"), function(controller) {
+      return {
+        "input[data-binding='display']": {
+          init: function() { controller.displayString.addListener(this); },
+          update: function(event) { this.value = event.detail; }
+        },
+
+        "button[data-action='clear']": {
+          click: Impulse.bindDataset(controller, "actionPressed")
+        },
+        
+        "button[data-number]": {
+          click: function(event) { return controller.numberPressed(event.target.dataset["number"]); }
+        },
+        
+        "button[data-operator]": {
+          click: Impulse.bindDataset(controller, "operatorPressed")
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,787 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+	<title>FT-86 Part Picker | Build your Dream Machine!</title>
+
+	<meta charset="UTF-8">
+	<meta name="mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-title" content="FT86 Parts">
+	<meta name="viewport" content="width=device-width, maximum-scale=1">
+
+	<link rel="stylesheet" href="styles/global.css">
+	<link rel="icon" type="image/png" href="favicon.png">
+	<link rel="apple-touch-icon" href="favicon.png">
+
+	<script src="scripts/zepto.min.js"></script>
+	<script src="models/partdata.js" type="text/javascript"></script>
+	<script type="text/javascript">
+		"use strict";
+
+		var userData = [];
+		var setupName = null;
+		var modified = false;
+
+		var labels = { "color": "Color", "width": "Width", "offset": "Offset", "weight": "Weight", "utqg": "UTQG", "details": "Details" };
+		var units = { "color": "", "offset": "mm", "weight": "lbs", "width": "in" };
+
+		var hideIntro = false;
+
+		$(window).on("load", function()
+		{
+			window.templates = $(document).find("#templates").remove();
+
+			window.partData = partData.sort(function(a, b)
+			{
+				if (a["price"] < b["price"]) return -1;
+				else if (a["price"] > b["price"]) return +1;
+				
+				return 0;
+			});
+			
+			refreshSummary();
+			displayCarParts();
+
+			setTimeout(function()
+			{
+				$(window).on("popstate", function(event)
+				{
+					//console.log("popstate", history.state);
+										
+					refreshSummary();
+					displayDetails(window.dataSource, window.category);
+				});
+			}, 500);
+		});
+		
+		function displayDetails(dataSource, partCategory)
+		{
+			var infoTemplate = $(templates).find("." + (partCategory ? partCategory : "setup") + "-info");
+			$(document).find("#info").html(infoTemplate.length > 0 ? infoTemplate.html() : "...");
+
+			var nameElement = $(document).find("[rel='setup-name']");
+			if (setupName)
+				nameElement.text(setupName + (modified ? " [Modified]" : ""));
+			else
+				nameElement.text("Untitled");
+
+			if (hideIntro)
+			{
+				$(document).find("#welcome-text").css("display", "none");
+			}
+			
+			hideIntro = true;
+
+			$(document).find(".filters").hide();
+			$(document).find("#" + partCategory + "-filters").show();
+
+			var detailsDiv = $(document).find("#page #details ul");
+
+			detailsDiv.empty();
+
+			var typeSelect = $(document).find("#type-filter");
+
+			var colorSelect = $(document).find("#color-filter");
+			var widthSelect = $(document).find("#width-filter");
+			
+			var filtered = $.grep(dataSource, function(item)
+			{
+				if (partCategory && partCategory != item["category"]) return false;
+				if (typeSelect.val() != "" && item["type"] != typeSelect.val()) return false;
+
+				if (item["data"])
+				{
+					var data = item["data"];
+					
+					if (partCategory == "wheels")
+					{
+						if (colorSelect.val() && data["color"].indexOf(colorSelect.val()) == -1) return false;
+						if (widthSelect.val() && data["width"].indexOf(parseFloat(widthSelect.val())) == -1) return false;
+					}
+				}
+				
+				return true;
+			});
+
+			$(document).find("#item-count").text(filtered.length + " items");
+
+			if (filtered.length == 0)
+			{
+				detailsDiv.html("<li style=\"font-size: 20px; text-align: center; line-height: 150px;\">No parts found</li>");
+			}
+
+			$.each(filtered, function(index, item)
+			{
+				// HTML
+
+				//var itemDiv = $(document).find("#templates .details-item").clone();
+				var itemDiv = $(templates).find(".details-item").clone();
+				
+				itemDiv.find("[rel='offset']").attr("id", item["part-id"]);
+
+				var index = userData.map(function(item) { return item["part-id"]; }).indexOf(item["part-id"]);
+
+				if (!partCategory && index >= 0)
+				{
+					itemDiv.find("[rel='name']").css("color", "#40a0f0").css("cursor", "pointer").on("click", function()
+					{
+						displayCategory(item["category"], item["part-id"]);
+					});
+				}
+				
+				itemDiv.find("[rel='name']").text(item["name"]);
+				itemDiv.find("[rel='image']").attr("src", "images/" + item["image"]);
+				itemDiv.find("[rel='summary']").text(item["summary"]);
+				if (item["quantity"]) {
+					itemDiv.find("[rel='price']").text("$" + item["price"] * item["quantity"]);
+					itemDiv.find("[rel='each']").text("$" + item["price"] + " each");
+				} else {
+					itemDiv.find("[rel='price']").text("$" + item["price"]);
+					itemDiv.find("[rel='each']").text("");
+				}
+				
+				if (item["data"]) {
+					var tableElement = itemDiv.find("[rel='data']");
+					
+					createTable(tableElement, item["data"]);
+				}
+
+				// Events
+
+				var partIds = userData.map(function(item) { return item["part-id"]; });
+				var index = partIds.indexOf(item["part-id"]);
+
+				if (index > -1)
+				{
+					itemDiv.find("[rel='button']").addClass("remove").text("DEL");
+				}
+
+				itemDiv.find("[rel='button']").on("click", function()
+				{
+					if (index > -1)
+						removePartById(item["part-id"]);
+					else
+						addPartById(item["part-id"]);
+				});
+				
+				detailsDiv.append(itemDiv);
+			});
+		}
+
+		function createTable(tableElement, tableData)
+		{
+			for (var property in tableData)
+			{
+				var rowElement = $("<tr>");
+				tableElement.append(rowElement);
+				
+				var headerElement = $("<th>").text(labels[property]);
+				rowElement.append(headerElement);
+
+				var dataElement = $("<td>");
+
+				if (tableData[property] instanceof Array)
+				{
+					$.each(tableData[property], function(index, attr)
+					{
+						dataElement.append(attr);
+						
+						if (index < tableData[property].length - 1)
+						{
+							dataElement.append(", ");
+						}
+					});
+					
+					dataElement.append(" " + units[property]);
+				}
+				else
+				{
+					dataElement.text(tableData[property] + (units[property] ? " " + units[property] : ""));
+				}
+				
+				rowElement.append(dataElement);
+			}
+		}
+
+		function displayAlternate(element, imageUrl)
+		{
+			alert(element);
+		}
+
+		function displayCategory(category, partId)
+		{
+			window.dataSource = partData;
+			window.category = category;
+
+			refreshFilter(partData, category);
+			
+			try {
+				//window.history.pushState(null, "", window.location.pathname);
+				//location.hash = category;
+			} catch(e) {
+				//
+			}
+			
+			displayDetails(partData, category);
+			
+			document.body.scrollTop = 0;
+			
+			if (partId) {
+				location.hash = partId;
+				//window.history.replaceState(null, "", window.location.hash + "#" + partId);
+			} else {
+				location.hash = "";
+			}
+		}
+
+		function displayCarParts()
+		{
+			window.dataSource = userData;
+			window.category = null;
+
+			refreshFilter(userData);
+			
+			displayDetails(userData);
+
+			document.body.scrollTop = 0;
+			location.hash = "";
+		}
+
+		function findPartById(partId)
+		{
+			for (var i = 0; i < partData.length; i++)
+			{
+				var item = partData[i];
+				
+				if (item["part-id"] == partId)
+				{
+					return item;
+				}
+			}
+			
+			return null;
+		}
+
+		function refreshURL(partIds, addVersion)
+		{
+			try {
+				if (partIds.length > 0) {
+					window.history.pushState({ loaded: true }, "", window.location.pathname + "?parts=" + partIds.join(",") + (setupName ? "&name=" + setupName : "") + (addVersion ? "&v=" + new Date().getTime() : ""));
+				} else {
+					window.history.pushState({ loaded: true }, "", window.location.pathname);
+				}
+
+				refreshSummary(window.dataSource, window.category);
+				displayDetails(window.dataSource, window.category);
+			} catch(e) {
+				if (partIds.length > 0) {
+					window.location.search = "parts=" + partIds.join(",");
+				} else {
+					location.href = location.pathname;
+				}
+			}
+		}
+		
+		function addPartById(partId)
+		{
+			var partIds = userData.map(function(item) { return item["part-id"]; });
+			
+			partIds.push(partId);
+			
+			partIds = partIds.sort(function(a, b)
+			{
+				if (parseInt(a) < parseInt(b)) return -1;
+				else if (parseInt(a) > parseInt(b)) return +1;
+				
+				return 0;
+			});
+
+			modified = true;
+			refreshURL(partIds);
+		}
+
+		function removePartById(partId)
+		{
+			var partIds = userData.map(function(item) { return item["part-id"]; });
+			
+			var index = partIds.indexOf(partId);
+			
+			if (index > -1) {
+				partIds.splice(index, 1);
+			}
+
+			modified = true;
+			refreshURL(partIds);
+		}
+
+		function refreshSummary()
+		{
+			userData.length = 0;
+			
+			$(document).find("#summary .total").text("$" + 0);
+			$(document).find("#summary ul").empty();
+
+			if (window.location.search.length < 1) return;
+			
+			var query = window.location.search.substr(1).split("&");
+			var params = { };
+
+			for (var i = 0; i < query.length; i++)
+			{
+				var pair = query[i].split("=");
+				
+				params[pair[0]] = pair[1];
+			}
+			
+			var partIds = params["parts"].split(",");
+			var total = 0;
+			
+			if (params["name"])
+			{
+				setupName = decodeURIComponent(params["name"]);
+			}
+			
+			$.each(partIds, function(index, partId)
+			{
+				var part = findPartById(partId);
+
+				if (!part) return;
+
+				userData.push(part);
+				
+				var node = $(templates).find(".summary-item").clone();
+				node.css("cursor", "pointer");
+				
+				node.on("click", function(event)
+				{
+					displayCategory(part["category"], part["part-id"]);
+				});
+				
+				node.find(".name").text(part["name"]);
+				if (part["quantity"]) {
+					node.find(".price").text("$" + part["price"] * part["quantity"]);
+				} else {
+					node.find(".price").text("$" + part["price"]);
+				}
+
+				var category = part["section"] ? part["section"] : part["category"];
+
+				$(document).find("#summary #" + category).append(node);
+				
+				total += part["price"] * (part["quantity"] ? part["quantity"] : 1);
+			});
+
+			$(document).find("#summary .total").text("$" + total);
+		}
+
+		function refreshFilter(dataSource, partCategory)
+		{
+			var typeSelect = $(document).find("#type-filter");
+			var typeValues = { };
+
+			var colorSelect = $(document).find("#color-filter");
+			var widthSelect = $(document).find("#width-filter");
+
+			if (partCategory == "wheels")
+			{
+				colorSelect.val("");
+				widthSelect.val("");
+			}
+
+			for (var i = 0; i < dataSource.length; i++)
+			{
+				var item = dataSource[i];
+
+				if (partCategory && partCategory != item["category"]) continue;
+
+				if (item["type"]) {
+					typeValues[item["type"]] = typeValues[item["type"]] + 1 || 1;
+				}
+			}
+
+			typeSelect.find("option").remove();
+			
+			typeSelect.append(new Option("All Parts", ""));
+
+			for (var value in typeValues)
+			{
+				typeSelect.append(new Option(value, value));
+			}
+		}
+
+		function filterDetails(select)
+		{
+			displayDetails(window.dataSource, window.category);
+			
+			document.body.scrollTop = 0;
+		}
+
+		function sortDetails(select)
+		{
+			if (select.value == "Price")
+				sortByPrice();
+			else if (select.value == "Weight")
+				sortByWeight();
+			else if (select.value == "Brand")
+				sortByBrand();
+
+			document.body.scrollTop = 0;
+		}
+
+		function sortByPrice()
+		{
+			window.partData = partData.sort(function(a, b) {
+				if (a["price"] < b["price"]) return -1;
+				else if (a["price"] > b["price"]) return +1;
+				
+				return 0;
+			});
+			
+			displayDetails(window.dataSource, window.category);
+		}
+
+		function sortByWeight()
+		{
+			window.partData = partData.sort(function(a, b)
+			{
+				if (a["data"] && a["data"]["weight"]) {
+					if (b["data"] && b["data"]["weight"]) {
+						if (a["data"]["weight"] < b["data"]["weight"]) return -1;
+						else if (a["data"]["weight"] > b["data"]["weight"]) return +1;
+						return 0;
+					} else return -1;
+				} else return 1;
+			});
+			
+			displayDetails(window.dataSource, window.category);
+		}
+
+		function sortByBrand()
+		{
+			window.partData = partData.sort(function(a, b)
+			{
+				if (a["name"] < b["name"]) return -1;
+				else if (a["name"] > b["name"]) return +1;
+				
+				return 0;
+			});
+			
+			displayDetails(window.dataSource, window.category);
+		}
+		
+		function saveSetup()
+		{
+			var newSetupName = prompt("What do you want to call this setup?");
+			var setupAuthor = prompt("What's your ft86club.com username?");
+			
+			if (newSetupName && setupAuthor)
+			{
+				setupName = newSetupName;
+				modified = false;
+				
+				var partIds = userData.map(function(item) { return item["part-id"]; });
+
+				refreshURL(partIds);
+			
+				$.get("cgi-bin/add-setup", { name: setupName, url: location.search, author: setupAuthor }, function(data, status)
+				{
+				});
+			}
+			else alert("Setup not saved - Empty fields are not allowed.");
+		}
+		
+		function showSetups()
+		{
+			$.get("setups.txt?v" + new Date().getTime(), function(data, status)
+			{
+				var detailsDiv = $(document).find("#page #details [rel='setup-list']").empty();
+				
+				var parts = data.split("\n");
+				
+				for (var i = 0; i < parts.length - 1; i++)
+				{
+					var query = parts[i].split("&");
+					var params = { };
+		
+					for (var j = 0; j < query.length; j++)
+					{
+						var pair = query[j].split("=");
+						
+						params[pair[0]] = pair[1];
+					}
+					
+					var li = $("<li>");
+					li.append($("<span>").css("float", "right").css("width", "150px").css("text-align", "right").text(new Date(params["time"] * 1000).toDateString()));
+					li.append($("<span>").css("float", "right").text(params["author"]));
+					//li.append($("<a>", { href: decodeURIComponent(params["url"]) }).text(decodeURIComponent(params["name"])));
+					li.append($("<a>", { href: decodeURIComponent(params["url"]) }).text(decodeURIComponent(params["name"])).css("display", "inline"));
+					li.append(" &nbsp;&mdash;&nbsp; $" + params["price"]);
+				
+					detailsDiv.append(li);
+				}
+			});
+		}
+	</script>
+<body>
+
+	<div id="page">
+
+		<div id="summary" style="overflow: auto;">
+			<header>
+				<span class="total">$5000</span>
+				<h1><a href="javascript:displayCarParts()">Current Setup</a></h1>
+			</header>
+
+			<div class="content" style="margin-top: 42px; xdisplay: none;">
+				<h1>
+					<a href="javascript:displayCategory('wheels')">Wheels</a> &amp;
+					<a href="javascript:displayCategory('tires')">Tires</a> &amp;
+					<a href="javascript:displayCategory('wheel_acc')">More</a>
+				</h1>
+				<ul id="wheels">
+				</ul>
+				<h1><a href="javascript:displayCategory('suspension')">Suspension</a> &amp;
+					<a href="javascript:displayCategory('brakes')">Brakes</a></h1>
+				<ul id="suspension">
+				</ul>
+				<h1><a href="javascript:displayCategory('engine')">Engine</a> &amp;
+					<a href="javascript:displayCategory('exhaust')">Exhaust</a></h1>
+				<ul id="engine">
+				</ul>
+				<h1>
+					<a href="javascript:displayCategory('drivetrain')">Drivetrain</a> &amp;
+					<a href="javascript:displayCategory('cooling')">Cooling</a>
+				</h1>
+				<ul id="drivetrain">
+				</ul>
+				<h1><a href="javascript:displayCategory('braces')">Braces</a> &
+					<a href="javascript:displayCategory('bushings')">Bushings</a></h1>
+				<ul id="braces">
+				</ul>
+				<h1>
+					<a href="javascript:displayCategory('interior')">Interior</a> &amp;
+					<a href="javascript:displayCategory('exterior')">Exterior</a>
+				</h1>
+				<ul id="cosmetic">
+				</ul>
+			</div>
+
+			<script type="text/javascript">document.write("<div style='margin: 10px;'>" + new Date() + "</div>");</script>
+			<a href="javascript:refreshURL(userData.map(function(item) { return item['part-id']; }), true)" style="display: block; margin: 10px 10px;">REFRESH</a>
+			<a href="javascript:location.reload(true)" style="display: block; margin: 10px 10px;">RELOAD</a>
+		</div>
+
+		<div id="details">
+			<header xstyle="background: linear-gradient(0deg, #ffffff, #d8d8d8); position: relative;">				
+				<div id="item-count" style="position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; left: 0; xborder: 1px solid red; text-align: center; line-height: 42px;">25 items</div>
+				
+				<div class="select" style="float: left; margin: 5px 0; margin-right: 100px;">
+					<select id="type-filter" style="height: 30px;" onchange="filterDetails(this);">
+						<optgroup label="Show"></optgroup>
+						<option value="">All Parts</option>
+					</select>
+				</div>
+
+				<div class="select" style="float: right; margin: 5px 0; xmargin-right: 10px;">
+					<select style="height: 30px;" onchange="sortDetails(this);">
+						<optgroup label="Sort"></optgroup>
+						<option value="Price">By Price</option>
+						<option value="Weight">By Weight</option>
+						<option value="Brand">By Brand</option>
+					</select>
+				</div>
+			</header>
+
+			<div style="margin-top: 45px;"></div>
+
+			<div id="wheels-filters" class="filters" style="overflow: hidden; margin: 0 10px;">
+				<div class="select" style="float: left; margin: 5px 0; margin-right: 5px; xborder: none;">
+					<select id="color-filter" style="height: 30px;" onchange="filterDetails(this);">
+						<optgroup label="Filter By"></optgroup>
+						<option value="">Any Color</option>
+						<option value="Silver">Silver</option>
+						<option value="Black">Black</option>
+						<option value="Gray">Gray</option>
+						<option value="White">White</option>
+						<option value="Bronze">Bronze</option>
+						<option value="Gold">Gold</option>
+					</select>
+				</div>
+				<div class="select" style="float: left; margin: 5px 0;">
+					<select id="width-filter" style="height: 30px;" onchange="filterDetails(this);">
+						<optgroup label="Filter By"></optgroup>
+						<option value="">Any Width</option>
+						<option value="8">8.0in</option>
+						<option value="8.5">8.5in</option>
+						<option value="9.5">9.5in</option>
+					</select>
+				</div>
+			</div>
+
+			<div id="info">
+			</div>
+			
+			<ul class="list">
+			</ul>
+		</div>
+
+	</div>
+
+	<div id="templates">
+		<li class="summary-item">
+			<span class="price">$900</span>
+			<span class="name">Enkei Tuning T6S 18x8 +45</span>
+		</li>
+		
+		<li class="xdetails-item" style="width: 310px;">
+			<div rel="offset" style="position: relative; top: -60px;"></div>
+			<div class="stats" style="clear: both; border-bottom: 1px solid #d8d8d8; margin-right: 10px; margin-bottom: 10px;">
+				<h1 rel="name" style="font-size: 16px; height: 35px; xoutline: 1px dotted red;">WORKS Exhale Axle Back Muffler Exhaust</h1>
+				<div class="summary" rel="summary" style="display: none;">
+				</div>
+				<table class="data" rel="data" style="display: none;">
+				</table>
+			</div>
+			<div class="store" style="height: 95px; xborder-left: none;">
+				<div class="price" rel="price">$400</div>
+				<div class="each" rel="each">$200 each</div>
+				<a class="add" href="javascript:void(0)" rel="button">ADD</a>
+			</div>
+			<div class="image" style="width: 190px; height: 90px; line-height: 100px; margin-right: 0;">
+				<img rel="image" src="images/147.212-2.jpg" style="max-width: 190px; max-height: 90px;"/>
+			</div>
+		</li>
+
+		<li class="details-item">
+			<div rel="offset" style="position: relative; top: -60px;"></div>
+			<div class="image" style="xbackground: #808080; outline: 1px dashed #f0f0f0; overflow: hidden;">
+				<img rel="image" src="images/147.212-2.jpg" xstyle="outline: 1px dashed #f0f0f0;"/>
+			</div>
+			<div class="store">
+				<div class="price" rel="price">$400</div>
+				<div class="each" rel="each">$200 each</div>
+				<a class="add" href="javascript:void(0)" rel="button">ADD</a>
+			</div>
+			<div class="stats">
+				<h1 rel="name">WORKS Exhale Axle Back Muffler Exhaust</h1>
+				<div class="summary" rel="summary">
+				</div>
+				<table class="data" rel="data">
+				</table>
+			</div>
+		</li>
+
+		<div class="setup-info">
+			<div id="welcome-text" style="xborder-bottom: 1px solid #d8d8d8; margin-bottom: 20px; padding-bottom: 20px; background: #ffffe0; margin: -5px -10px 20px -10px; padding: 10px; padding-bottom: 15px; box-shadow: 0 1px 5px #e0e0e0, 0 2px 0px #d8d8d8; border-radius: 2px;">
+				<div style="font-size: 20px;">
+					Welcome to ft86partpicker.com [ALPHA]!
+				</div>
+				<br/>
+			
+				<div>This is a personal project for creating a parts configurator for BRZ and FR-S fans similar to pcpartpicker.com.  It allows you to quickly browse categories, estimate prices, and experiment with different part combinations.  It works on desktop and mobile (at least iPad).</div>
+				<br/>
+				<div>Filtering/sorting is somewhat implemented, but I'm sure there are lots of bugs.  Data is stored in the URL, so just bookmark or copy it to save or share your setup.    Try out a few templates below.  Enjoy :)</div>
+			</div>
+
+			<div>
+				<a xhref="" onclick="showSetups()" style="float: right; font-size: 20px; xpadding: 0 10px; xborder-right: 1px solid #c0c0c0;">More...</a>
+				
+				<a href="?name=Stock+&parts=112,205,300,301,400,401,404,500,502,701,702,1202" onclick="refreshSummary()" style="font-size: 20px; padding-right: 12px; border-right: 1px solid #c0c0c0;">Stock+</a>
+	
+				<a href="?name=Street&parts=117,205,301,305,400,401,404,500,502,600,604,701,702,1202" onclick="refreshSummary()" style="font-size: 20px; padding: 0 10px; border-right: 1px solid #c0c0c0;">Street</a>
+				
+				<a href="?name=Turbo&parts=116,202,306,308,401,400,404,503,603,701,702,1200,1202,1203" onclick="refreshSummary()" style="font-size: 20px; padding: 0 10px; border-right: 1px solid #c0c0c0;">Turbo</a>
+				
+				<a href="?name=Track&parts=103,204,304,307,404,406,405,505,503,601,604,700,701,702,1200,1201,1202,1203" onclick="refreshSummary();" style="font-size: 20px; padding: 0 10px; border-right: 1px solid #c0c0c0;">Track</a>
+	
+				<a href="?parts=123,204,304,307,402,403,404,504,505,602,604,700,701,702,704,706,707,900,901,903,1000,1200,1201,1202,1203,1204&name=Monster" onclick="refreshSummary();" style="font-size: 20px; padding: 0 10px; xborder-right: 1px solid #c0c0c0;">Monster</a>
+			</div>
+
+			<br/>
+
+			<div class="list" rel="setup-list">Modding cars is all about balance: the quality, performance, price and look of each component related to each other.  Also, upgrades in one area sometimes require upgrades in others.  A higher HP car is going to need better brakes to stop it.  And for quality in general, you get what you pay for.</div>
+
+			<br/>
+
+			<div xstyle="margin-top: 5px;">
+				<a href="." onclick="refreshSummary()" style="float: right; font-size: 20px; padding: 0 10px; padding-right: 0;">Reset</a>
+				<!--<a onclick="saveSetup()" style="float: right; font-size: 20px; border-right: 1px solid #c0c0c0; padding: 0 10px;">Publish</a>-->
+				<span rel="setup-name" style="font-size: 20px;">Stock+</span>
+			</div>
+		</div>
+
+		<div class="wheels-info">
+			Wheels are what help plant your car to the ground&mdash;the lighter the better. Flow-formed low-pressure/tilt cast wheels offer good quality and weight at a reasonable price.  Forged wheels are even lighter, but can be expensive.  18x8 or 8.5s are a good balance of looks and weight.<br/><br/>
+			
+			More information can be found on the <a target="_blank" href="http://www.ft86club.com/forums/showthread.php?t=3062">FT-86 CLUB | Wheels 101</a> forum thread.
+		</div>
+
+		<div class="tires-info">
+			Tires are the conduit in which you communicate with the road&mdash;telling the car where to go, but also feeling the road and listening to the tires.  Firm, grippier tires with a smaller sidewall will laugh at the stock ones, but that also means you'll generally have a little stiffer, harsher ride.<br/></br>
+			
+			
+			More information can be found on the <a target="_blank" href="http://www.ft86club.com/forums/showthread.php?t=15007">FT-86 CLUB | Will this [tire] fit?</a> forum thread.
+		</div>
+
+		<div class="suspension-info">
+			Suspension helps your car hug the road&mdash;in tight turns and on uneven pavement.  It also defines your car's stance, or ride height.  Higher quality components give better performance and more adjustability.<br/><br/>
+
+			More information can be found at <a target="_blank" href="http://www.rapid-racer.com/suspension-tuning.php">RAPID-RACER | Suspension Tuning</a>.
+		</div>
+
+		<div class="brakes-info">
+			Brakes slow down or stop the car. But they're also used to shift weight around to balance the car.  Stock brakes are fine for doing errands, but can loose grip, or fade, with spirited driving and time at the track.  Upgrades range from simple brake pad and brake line swaps to monster big brake kits.<br/><br/>
+
+			More information can be found at <a target="_blank" href="http://www.ft86club.com/forums/showthread.php?t=8182">FT-86 CLUB | FR-S / BRZ Brakes Upgrade Guide</a>.
+		</div>
+	</div>
+
+</body>
+</html>
+
+<!--
+
+Don't spend less than $200 per wheel
+
+			<div class="content" style="margin-top: 40px;">
+				<h1><a href="javascript:displayCategory('wheels')">Wheels</a></h1>
+				<ul id="wheels" xstyle="margin-bottom: 20px;">
+				</ul>
+				<h1><a href="javascript:displayCategory('tires')">Tires</a></h1>
+				<ul id="tires" xstyle="margin-bottom: 20px;">
+				</ul>
+				<h1><a href="javascript:displayCategory('wheel-acc')">Accessories</a></h1>
+				<ul id="wheel-acc" xstyle="margin-bottom: 20px;">
+				</ul>
+
+				<h1 style="margin-top: 20px;"><a href="javascript:displayCategory('suspension')">Suspension</a></h1>
+				<ul id="suspension">
+				</ul>
+				<h1><a href="javascript:displayCategory('brakes')">Brakes</a></h1>
+				<ul id="brakes">
+				</ul>
+				<h1><a href="javascript:displayCategory('braces')">Braces</a></h1>
+				<ul id="braces">
+				</ul>
+				
+				<h1 style="margin-top: 20px;"><a href="javascript:displayCategory('engine')">Engine</a></h1>
+				<h1><a href="javascript:displayCategory('intake')">Intake</a></h1>
+				<h1><a href="javascript:displayCategory('exhaust')">Exhaust</a></h1>
+				<ul id="engine" xstyle="margin-bottom: 20px;">
+				</ul>
+				
+				<h1 style="margin-top: 20px;"><a href="javascript:displayCategory('drivetrain')">Drivetrain</a></h1>
+				<h1><a href="javascript:displayCategory('fluids')">Fluids</a></h1>
+				<h1><a href="javascript:displayCategory('cooling')">Cooling</a></h1>
+				<ul id="drivetrain" xstyle="margin-bottom: 20px;">
+				</ul>
+				
+				<h1 style="margin-top: 20px;"><a href="javascript:displayCategory('interior')">Interior</a></h1>
+				<h1><a href="javascript:displayCategory('exterior')">Exterior</a></h1>
+				<h1><a href="javascript:displayCategory('other')">Other</a></h1>
+				<ul id="exterior">
+				</ul>
+			</div>
+
+-->
