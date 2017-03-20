@@ -263,21 +263,6 @@ var partData = [
 		"part-id":	119,
 		"category":	"wheels",
 		"type":		"Wheels",
-		"name":		"TSW Interlagos 18x8 +45 Wheels (4)",
-		"summary":	"Modest pressure-cast rotary-forged lightweight wheels.",
-	 	"image":	"_1346430464.jpg",
-		"price":	250,
-		"quantity":	4,
-		"data":		{
-			"color": ["Silver", "Black"],
-			"width":	[8],
-			"offset":	[35, 45],
-			"weight":	18.85
-		}
-	}, {
-		"part-id":	119,
-		"category":	"wheels",
-		"type":		"Wheels",
 		"name":		"TSW Nurburgring 18x8 +45 Wheels (4)",
 		"summary":	"Modest pressure-cast rotary-forged lightweight wheels.",
 	 	"image":	"nurburgring_silver_pop_std.jpg",
@@ -356,7 +341,22 @@ var partData = [
 			"width":	[8.0, 8.5, 9.0, 9.5],
 			"weight":	15.2
 		}
-	},
+	}, {
+		"part-id":	125,
+		"category":	"wheels",
+		"type":		"Wheels",
+		"name":		"TSW Interlagos 18x8 +45 Wheels (4)",
+		"summary":	"Modest pressure-cast rotary-forged lightweight wheels.",
+	 	"image":	"_1346430464.jpg",
+		"price":	250,
+		"quantity":	4,
+		"data":		{
+			"color": ["Silver", "Black"],
+			"width":	[8],
+			"offset":	[35, 45],
+			"weight":	18.85
+		}
+    },
 
 	/* 200 - Tires */
 	

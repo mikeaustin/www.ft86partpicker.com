@@ -1,27 +1,26 @@
-process.env.NODE_ENV = 'production';
-
 var webpack = require('webpack');
 var path = require('path');
 
-module.exports = {
-  devtool: 'source-map',
-  entry: './index.jsx',
+//var BUILD_DIR = path.resolve(__dirname, 'src/client/public');
+var BUILD_DIR = path.resolve(__dirname, '.');
+var APP_DIR = path.resolve(__dirname, 'src/client/app');
+
+var config = {
+  entry: APP_DIR + '/index.js',
   output: {
-    path: __dirname,
+    path: BUILD_DIR,
     filename: 'bundle.js'
   },
   module: {
     loaders: [
       {
         test: /\.jsx?/,
-        exclude: /node_modules/,
-        loader: "babel-loader"
+        include: APP_DIR,
+        loader: 'babel-loader'
       }
     ]
-  },
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': '"production"'
-    })
-  ]
+  }
 };
+
+module.exports = config;
+
