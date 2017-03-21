@@ -6,7 +6,7 @@ class App extends React.Component {
     super(props);
     
     this.state = {
-      partids: [100, 207, 301, 401],
+      partids: [107, 207, 301, 401, 500],
       category: "wheels"
     }
   }
@@ -28,11 +28,12 @@ class App extends React.Component {
 
     var partsListItems = Array.from(this.props.items.values()).filter(item => item.category === this.state.category);
     var setupListItems = this.state.partids.map(partid => this.props.items.get(partid));
+    var activeCategory = this.state.category;
     
     return (
       <div>
         <div id="setup-list">
-          <SetupList items={setupListItems} onChangeCategory={this.onChangeCategory.bind(this)} />
+          <SetupList items={setupListItems} activeCategory={activeCategory} onChangeCategory={this.onChangeCategory.bind(this)} />
         </div>
         <div id="parts-list">
           <PartsList items={partsListItems} />
@@ -66,9 +67,12 @@ class SetupList extends React.Component {
       <div>
         {
           Array.from(sections).map(([section, items]) => {
+          console.log(section === this.props.activeCategory);
+            var className = section === this.props.activeCategory ? "active" : "";
+            
             return (
-              <div key={section}>
-                <h1><a href="#" onClick={() => this.changeCategory(section)}>{section}</a></h1>
+              <div key={section} className="section">
+                <h1><a href="#" className={className} onClick={() => this.changeCategory(section)}>{section}</a></h1>
                 <ul>
                   {
                     items.map(item => {

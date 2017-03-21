@@ -4,17 +4,24 @@
   <title>React.js using NPM, Babel6 and Webpack</title>
   <script src="../scripts/lodash.min.js"></script>
   <script src="../models/partdata.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Exo" rel="stylesheet">
   <style type="text/css">
     * {
       box-sizing: border-box;
       margin: 0; padding: 0;
-      font: 14px/1.5em Arial;
+      font: 14px/1.5em Exo;
       color: hsl(0, 0%, 25%);
+    }
+
+    body {
+      xbackground: hsl(0, 0%, 50%);
+      background: black;
     }
     
     main {
       width: 1024px;
       margin: 0 auto;
+      xbox-shadow: 0 0 20px hsl(0, 0%, 0%);
     }
     
     ul {
@@ -33,19 +40,40 @@
       position: fixed;
       width: 320px; top: 0; bottom: 0;
       background: hsl(0, 0%, 0%);
+      border: 2px solid hsl(0, 0%, 0%);
     }
 
     #setup-list * {
       color: hsl(0, 0%, 100%);
     }
     
-    #setup-list {
-      padding: 0 10px;
+    #setup-list ul {
+      padding: 5px 10px;
+    }
+    
+    #setup-list ul > li {
+      margin: 5px 0;
+    }
+    
+    #setup-list .section h1 a {
+      display: block;
+      xpadding: 5px 10px;
+      height: 40px;
+      line-height: 42px;
+      background: hsl(0, 0%, 25%);
+      xborder-bottom: 1px solid hsl(0, 0%, 0%);
+      margin-bottom: 2px;
+    }
+
+    #setup-list .section h1 a:hover, #setup-list .section h1 a.active {
+      background: hsl(200, 50%, 50%);
     }
     
     #setup-list h1 a {
       font-size: 20px;
       text-transform: capitalize;
+      padding-left: 10px;
+      xmargin-right: 10px;
     }
     
     #setup-list ul > li .price {
@@ -57,8 +85,12 @@
     */
 
     #parts-list {
+      position: relative;
       margin-left: 320px;
       background: hsl(0, 0%, 25%);
+      xbox-shadow: 0 0 20px hsl(0, 0%, 0%);
+      border: 2px solid black;
+      border-left: none;
     }
 
     #parts-list > ul {
@@ -68,10 +100,11 @@
 
     #parts-list > ul > li {
       height: 150px;
-      margin: 10px;
+      xmargin: 2px;
       overflow: hidden;
       xborder: 5px solid hsl(0, 0%, 15%);
-      background-color: hsl(0, 0%, 0%);
+      background-color: hsl(0, 0%, 25%);
+      border-bottom: 2px solid hsl(0, 0%, 0%);
     }
 
     #parts-list > ul > li * {
@@ -94,6 +127,7 @@
     
     #parts-list > ul > li .header {
       font-size: 20px;
+      margin-top: 5px;
     }
   </style>
 </head>
