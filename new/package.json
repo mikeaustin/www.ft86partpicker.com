@@ -2,7 +2,7 @@
   "name": "ft86partpicker",
   "version": "2.0.0",
   "description": "A parts configurator for BRZ and FR-S fans",
-  "main": "index.js",
+  "main": "index.jsx",
   "author": "Mike Austin <mike@mike-austin.com>",
   "license": "MIT",
   "scripts": {

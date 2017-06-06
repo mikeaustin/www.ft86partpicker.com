@@ -1,5 +1,6 @@
 import React from 'react';
-import {render} from 'react-dom';
+import ReactDOM from 'react-dom';
+
 
 class App extends React.Component {
 
@@ -19,14 +20,6 @@ class App extends React.Component {
   }
   
   render() {
-    var setupListStyle = {
-      float: "left"
-    }
-    
-    var partsListStyle = {
-      marginLeft: "300px"
-    }
-
     var partsListItems = Array.from(this.props.items.values()).filter(item => item.category === this.state.category);
     var setupListItems = this.state.partids.map(partid => this.props.items.get(partid));
     var activeCategory = this.state.category;
@@ -45,7 +38,25 @@ class App extends React.Component {
   
 }
 
+const List = (props) => {
+  return (
+    <ul>
+    {
+      props.items.map(item => React.Children.map(props.children, child => {
+        return React.cloneElement(child, {key: props.getKey(item), item: item});
+      }))
+    }
+    </ul>
+  );
+};
+
+
+//
+// SetupList
+//
+
 class SetupList extends React.Component {
+
   constructor(props) {
     super(props);
   }
@@ -66,29 +77,27 @@ class SetupList extends React.Component {
     });
 
     return (
-      <div>
-        {
-          Array.from(sections).map(([section, items]) => {
+      <div className="setup-list">
+      {
+        Array.from(sections).map(([section, items]) => {
           console.log(section === this.props.activeCategory);
-            var className = section === this.props.activeCategory ? "active" : "";
-            
-            return (
-              <div key={section} className="section">
-                <h1><a href="#" className={className} onClick={() => this.changeCategory(section)}>{section}</a></h1>
-                <ul>
-                  {
-                    items.map(item => {
-                      return <SetupListItem key={item['part-id']} item={item} />
-                    })
-                  }
-                </ul>
-              </div>
-            );
-          })
-        }
+          var className = section === this.props.activeCategory ? "active" : "";
+          
+          return (
+            <div key={section} className="section">
+              <h1><a href="#" className={className} onClick={() => this.changeCategory(section)}>{section}</a></h1>
+
+              <ul>
+                { items.map(item => <SetupListItem key={item['part-id']} item={item} />) }
+              </ul>
+            </div>
+          );
+        })
+      }
       </div>
     );
   }
+
 }
 
 function SetupListItem(props) {
@@ -100,23 +109,10 @@ function SetupListItem(props) {
   )
 }
 
-/*
-            <ul>
-              {
-                items.map(item => {
-                  return <li key={item['part-id']}>{ item.name }</li>
-                })
-              }
-            </ul>
 
-      <ul>
-        {
-          this.props.partids.map(partid => {
-            return <li key={partid}>{ this.props.items.get(partid).name }</li>
-          })
-        }
-      </ul>
-*/
+//
+// PartsList
+//
 
 class PartsList extends React.Component {
   constructor(props) {
@@ -125,12 +121,12 @@ class PartsList extends React.Component {
   
   render() {
     return (
-      <ul>
-        {
-          Array.from(this.props.items.entries()).map(([partid, item]) => {
-            return <PartsListItem key={partid} item={item} />
-          })
-        }
+      <ul className="parts-list">
+      {
+        Array.from(this.props.items.entries()).map(([partid, item]) => {
+          return <PartsListItem key={partid} item={item} />
+        })
+      }
       </ul>
     );
   }
@@ -139,7 +135,7 @@ class PartsList extends React.Component {
 function PartsListItem(props) {
   return (
     <li>
-      <div className="image" style={{ backgroundImage: "url(../images/" + props.item.image + ")" }} />
+      <div className="image" style={{ backgroundImage: "url(../images/" + encodeURIComponent(props.item.image) + ")" }} />
       <div className="description">
         <h1 className="header">{ props.item.name }</h1>
         <p>Inexpensive tilt-cast w/flow-forming lightweight wheels.</p>
@@ -148,8 +144,10 @@ function PartsListItem(props) {
   )
 }
 
+
 var items = partData.reduce((map, item) => {
   return map.set(item['part-id'], item);
 }, new Map());
 
-render(<App items={items} />, document.getElementById('app'));
+
+ReactDOM.render(<App items={items} />, document.getElementById('app'));
