@@ -24,8 +24,14 @@ class App extends React.Component {
     var setupListItems = this.state.partids.map(partid => this.props.items.get(partid));
     var activeCategory = this.state.category;
     
+    var setupTotal = setupListItems.reduce((total, item) => total + item.price * (item.quantity ? item.quantity : 1), 0);
+
     return (
       <div>
+        <header>
+          <span className="total">${setupTotal}</span>
+          <h1>Current Setup</h1>
+        </header>
         <div id="setup-list">
           <SetupList items={setupListItems} activeCategory={activeCategory} onChangeCategory={this.onChangeCategory.bind(this)} />
         </div>
