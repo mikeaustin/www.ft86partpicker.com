@@ -32,28 +32,41 @@
       text-decoration: none;
     }
 
-    header {
+    #setup-list header {
       position: fixed;
       z-index: 1;
-      width: 320px;
+      width: 318px;
+      border-bottom: 2px solid hsl(0, 0%, 0%);
     }
 
-    header * {
+    #setup-list header * {
       height: 40px;
       line-height: 42px;
       font-size: 20px;
       color: hsl(0, 0%, 100%);
     }
 
-    header h1 {
+    #setup-list header h1 a {
+      display: block;
       text-transform: capitalize;
       padding-left: 10px;
+      background: hsl(200, 0%, 25%);
     }
     
-    header .total {
+    #setup-list header .total {
       float: right;
       margin-right: 10px;
     }
+
+
+    #parts-list header {
+      position: fixed;
+      z-index: 1;
+      width: 704px; height: 42px;
+      background: hsl(0, 0%, 25%);
+      border-bottom: 2px solid hsl(0, 0%, 0%);
+    }
+
 
     /*
     ** #setup-list
@@ -64,10 +77,10 @@
       width: 320px;
       top: 0; bottom: 0;
       background: hsl(0, 0%, 0%);
-      padding: 40px 2px 2px 0;
+      padding: 0 2px 2px 0;
     }
 
-    #setup-list * {
+    .setup-list * {
       color: hsl(0, 0%, 100%);
     }
 
@@ -84,16 +97,16 @@
     }
 
     .setup-list .section h1 a:hover,
-    #setup-list .section h1 a.active {
-      background: hsl(200, 50%, 50%);
+    .setup-list .section h1 a.active {
+      background: hsl(200, 50%, 50%) !important;
     }
     
 
-    #setup-list ul {
+    .setup-list ul {
       padding: 5px 10px;
     }
     
-    #setup-list ul > li {
+    .setup-list ul > li {
       margin: 5px 0;
     }
     
@@ -110,7 +123,7 @@
       position: relative;
       margin-left: 320px;
       background: hsl(0, 0%, 0%);
-      padding: 40px 0 2px 0;
+      padding: 0 0 2px 0;
     }
 
 
@@ -139,6 +152,11 @@
 
     .parts-list > li > .description {
       margin-left: 210px;
+    }
+
+    .parts-list > li .actions {
+      float: right;
+      width: 100px;
     }
     
     .parts-list > li .header {

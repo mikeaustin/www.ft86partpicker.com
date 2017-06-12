@@ -13,10 +13,20 @@ class App extends React.Component {
     }
   }
   
-  onChangeCategory(category) {
+  componentDidMount() {
+    window.addEventListener("hashchange", event => {
+      this.setState({
+        partids: location.hash.slice(1).split(",").map(id => parseInt(id))
+      });
+    }, false);
+  }
+
+  changeCategory(category, event) {
     this.setState({
       category: category
     });
+
+    event.preventDefault();
   }
   
   render() {
@@ -26,17 +36,35 @@ class App extends React.Component {
     
     var setupTotal = setupListItems.reduce((total, item) => total + item.price * (item.quantity ? item.quantity : 1), 0);
 
+    if (this.state.category === null) {
+      partsListItems = setupListItems;
+    }
+
+    var className = activeCategory === null ? "active" : "";
+
     return (
       <div>
-        <header>
-          <span className="total">${setupTotal}</span>
-          <h1>Current Setup</h1>
-        </header>
         <div id="setup-list">
-          <SetupList items={setupListItems} activeCategory={activeCategory} onChangeCategory={this.onChangeCategory.bind(this)} />
+          <header className="setup-list">
+            <div className="section">
+              <h1>
+                <a href="#" className={className} onClick={(event) => this.changeCategory(null, event)}>
+                  <span className="total">${setupTotal}</span>Current Setup
+                </a>
+              </h1>
+            </div>
+          </header>
+          <div style={{paddingTop: "52px"}}>
+            <SetupList items={setupListItems} activeCategory={activeCategory}
+                       onChangeCategory={this.changeCategory.bind(this)} />
+          </div>
         </div>
         <div id="parts-list">
-          <PartsList items={partsListItems} />
+          <header>
+          </header>
+          <div style={{paddingTop: "52px"}}>
+            <PartsList items={partsListItems} />
+          </div>
         </div>
       </div>
     );
@@ -67,8 +95,8 @@ class SetupList extends React.Component {
     super(props);
   }
   
-  changeCategory(category) {
-    this.props.onChangeCategory(category);
+  changeCategory(category, event) {
+    this.props.onChangeCategory(category, event);
   }
   
   render() {
@@ -86,12 +114,11 @@ class SetupList extends React.Component {
       <div className="setup-list">
       {
         Array.from(sections).map(([section, items]) => {
-          console.log(section === this.props.activeCategory);
           var className = section === this.props.activeCategory ? "active" : "";
           
           return (
             <div key={section} className="section">
-              <h1><a href="#" className={className} onClick={() => this.changeCategory(section)}>{section}</a></h1>
+              <h1><a href="#" className={className} onClick={(event) => this.changeCategory(section, event)}>{section}</a></h1>
 
               <ul>
                 { items.map(item => <SetupListItem key={item['part-id']} item={item} />) }
@@ -121,21 +148,37 @@ function SetupListItem(props) {
 //
 
 class PartsList extends React.Component {
+
   constructor(props) {
     super(props);
   }
   
+  addPart(id) {
+    var parts = location.hash.slice(1);
+
+    window.location.hash = "#" + (parts === "" ? [] : parts.split(",")).concat([id]).join(",");
+
+    // partid[id].inSetup = true;
+  }
+
+  removePart(id) {
+    var parts = location.hash.slice(1);
+
+    window.location.hash = "#" + parts.split(",").filter(partId => partId != id).join(",");
+  }
+
   render() {
     return (
       <ul className="parts-list">
       {
         Array.from(this.props.items.entries()).map(([partid, item]) => {
-          return <PartsListItem key={partid} item={item} />
+          return <PartsListItem key={partid} item={item} onAddPart={this.addPart}/>
         })
       }
       </ul>
     );
   }
+
 }
 
 function PartsListItem(props) {
@@ -145,6 +188,9 @@ function PartsListItem(props) {
       <div className="description">
         <h1 className="header">{ props.item.name }</h1>
         <p>Inexpensive tilt-cast w/flow-forming lightweight wheels.</p>
+      </div>
+      <div className="actions">
+        <a onClick={() => props.onAddPart(props.item["part-id"])}>ADD</a>
       </div>
     </li>
   )
