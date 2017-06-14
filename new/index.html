@@ -17,6 +17,11 @@
       background: black;
       xbackground: hsl(0, 0%, 50%);
     }
+
+    button {
+      border: none;
+      cursor: pointer;
+    }
     
     main {
       width: 1024px;
@@ -153,15 +158,30 @@
     .parts-list > li > .description {
       margin-left: 210px;
     }
-
-    .parts-list > li .actions {
-      float: right;
-      width: 100px;
-    }
     
     .parts-list > li .header {
       font-size: 20px;
       margin-top: 5px;
+    }
+
+    .parts-list > li .actions {
+      position: relative;
+      float: right;
+      width: 100px; height: 100%;
+    }
+
+    .parts-list > li .actions .action {
+      position: absolute;
+      bottom: 10px; right: 10px;
+      width: 100px; height: 40px;
+      line-height: 42px;
+      font-size: 20px;
+      background: hsl(0, 0%, 50%);
+      text-align: center;
+    }
+
+    .parts-list > li .actions .action:hover {
+      background: hsl(200, 50%, 50%);
     }
   </style>
 </head>

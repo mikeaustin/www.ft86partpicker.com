@@ -8,7 +8,8 @@ class App extends React.Component {
     super(props);
     
     this.state = {
-      partids: [107, 207, 301, 401, 500],
+      partids: this.extractPartIds(location.hash),
+      setup: new Map(),
       category: "wheels"
     }
   }
@@ -16,9 +17,15 @@ class App extends React.Component {
   componentDidMount() {
     window.addEventListener("hashchange", event => {
       this.setState({
-        partids: location.hash.slice(1).split(",").map(id => parseInt(id))
+        partids: this.extractPartIds(location.hash)
       });
     }, false);
+  }
+
+  extractPartIds(hash) {
+    var parts = location.hash.slice(1);
+
+    return parts === "" ? [] : parts.split(",").map(id => parseInt(id));
   }
 
   changeCategory(category, event) {
@@ -63,7 +70,7 @@ class App extends React.Component {
           <header>
           </header>
           <div style={{paddingTop: "52px"}}>
-            <PartsList items={partsListItems} />
+            <PartsList items={partsListItems} partids={this.state.partids} />
           </div>
         </div>
       </div>
@@ -72,24 +79,24 @@ class App extends React.Component {
   
 }
 
-const List = (props) => {
-  return (
-    <ul>
-    {
-      props.items.map(item => React.Children.map(props.children, child => {
-        return React.cloneElement(child, {key: props.getKey(item), item: item});
-      }))
-    }
-    </ul>
-  );
-};
+// const List = (props) => {
+//   return (
+//     <ul>
+//     {
+//       props.items.map(item => React.Children.map(props.children, child => {
+//         return React.cloneElement(child, {key: props.getKey(item), item: item});
+//       }))
+//     }
+//     </ul>
+//   );
+// };
 
 
 //
 // SetupList
 //
 
-class SetupList extends React.Component {
+class SetupList extends React.PureComponent {
 
   constructor(props) {
     super(props);
@@ -119,7 +126,6 @@ class SetupList extends React.Component {
           return (
             <div key={section} className="section">
               <h1><a href="#" className={className} onClick={(event) => this.changeCategory(section, event)}>{section}</a></h1>
-
               <ul>
                 { items.map(item => <SetupListItem key={item['part-id']} item={item} />) }
               </ul>
@@ -147,32 +153,36 @@ function SetupListItem(props) {
 // PartsList
 //
 
-class PartsList extends React.Component {
+class PartsList extends React.PureComponent {
 
   constructor(props) {
     super(props);
+
+    this.partids = props.partids;
   }
   
   addPart(id) {
     var parts = location.hash.slice(1);
 
-    window.location.hash = "#" + (parts === "" ? [] : parts.split(",")).concat([id]).join(",");
-
-    // partid[id].inSetup = true;
+    window.location.hash = "#" + (parts === "" ? [] : parts.split(",")).concat([id.toString()]).join(",");
   }
 
   removePart(id) {
     var parts = location.hash.slice(1);
 
-    window.location.hash = "#" + parts.split(",").filter(partId => partId != id).join(",");
+    window.location.hash = "#" + (parts === "" ? [] : parts.split(",")).filter(partId => parseInt(partId) !== id).join(",");
   }
 
   render() {
     return (
       <ul className="parts-list">
       {
-        Array.from(this.props.items.entries()).map(([partid, item]) => {
-          return <PartsListItem key={partid} item={item} onAddPart={this.addPart}/>
+        Array.from(this.props.items).map((item) => {
+          var inSetup = this.props.partids.includes(item['part-id']);
+          var action = inSetup ? this.removePart : this.addPart,
+              actionTitle = inSetup ? "DEL" : "ADD";
+
+          return <PartsListItem key={item['part-id']} item={item} onAction={action} actionTitle={actionTitle} />
         })
       }
       </ul>
@@ -185,12 +195,12 @@ function PartsListItem(props) {
   return (
     <li>
       <div className="image" style={{ backgroundImage: "url(../images/" + encodeURIComponent(props.item.image) + ")" }} />
+      <div className="actions">
+        <button className="action" onClick={() => props.onAction(props.item["part-id"])}>{props.actionTitle}</button>
+      </div>
       <div className="description">
         <h1 className="header">{ props.item.name }</h1>
         <p>Inexpensive tilt-cast w/flow-forming lightweight wheels.</p>
-      </div>
-      <div className="actions">
-        <a onClick={() => props.onAddPart(props.item["part-id"])}>ADD</a>
       </div>
     </li>
   )
