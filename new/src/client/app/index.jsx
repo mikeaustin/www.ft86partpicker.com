@@ -55,9 +55,9 @@ class App extends React.Component {
           <header className="setup-list">
             <div className="section">
               <h1>
-                <a href="#" className={className} onClick={(event) => this.changeCategory(null, event)}>
+                <button className={className} onClick={(event) => this.changeCategory(null, event)}>
                   <span className="total">${setupTotal}</span>Current Setup
-                </a>
+                </button>
               </h1>
             </div>
           </header>
@@ -125,7 +125,7 @@ class SetupList extends React.PureComponent {
           
           return (
             <div key={section} className="section">
-              <h1><a href="#" className={className} onClick={(event) => this.changeCategory(section, event)}>{section}</a></h1>
+              <h1><button className={className} onClick={(event) => this.changeCategory(section, event)}>{section}</button></h1>
               <ul>
                 { items.map(item => <SetupListItem key={item['part-id']} item={item} />) }
               </ul>
